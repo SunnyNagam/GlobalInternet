@@ -93,7 +93,8 @@
             </div>
                 <!-- TODO put key in .env -->
             <div id="map" class="mr-5"></div>
-                <script async defer src="https://maps.googleapis.com/maps/api/js?key=PUT_UR_KEY_HERE&callback=initMap"></script>
+
+                <script async defer src="https://maps.googleapis.com/maps/api/js?key={{env('GMAPS_API_KEY','')}}&callback=initMap"></script>
             
         </div>
     </body>
@@ -130,19 +131,31 @@
                 console.log(results);
                 if (results[0]) {
                     // Set map marker
-                  console.log(results[0].formatted_address);
-                  address = (results[0].formatted_address);
-                  map.setZoom(11);
-                  var marker = new google.maps.Marker({
-                    position: latlng,
-                    map: map
-                  });
-                  infowindow.setContent(results[0].formatted_address);
-                  infowindow.open(map, marker);
+                    console.log(results[0].formatted_address);
+                    address = (results[0].formatted_address);
+                    map.setZoom(11);
+                    var marker = new google.maps.Marker({
+                        position: latlng,
+                        map: map
+                    });
+                    var circle = new google.maps.Circle({
+                        strokeColor: '#FF0000',
+                        strokeOpacity: 0.8,
+                        strokeWeight: 2,
+                        fillColor: '#FF0000',
+                        fillOpacity: 0.35,
+                        map: map,
+                        center: {lat: lat, lng: lng},
+                        radius: 10000
+                    });
+                    infowindow.open(map, circle);
+                    infowindow.setContent(results[0].formatted_address);
+                    infowindow.open(map, marker);
+                    
 
-                  //Set location infromation on our site
-                  document.getElementById("locTitle").innerHTML = address;
-                  document.getElementById("locDesc").innerHTML = "Wow what a great place!"
+                    //Set location infromation on our site
+                    document.getElementById("locTitle").innerHTML = address;
+                    document.getElementById("locDesc").innerHTML = "Wow what a great place!"
                 } else {
                   alert('No results found');
                 }
