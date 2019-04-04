@@ -111,7 +111,8 @@
 
           var geocoder = new google.maps.Geocoder;
           var infowindow = new google.maps.InfoWindow;
-
+          var circle = null;
+          var marker = null;
 
           map.addListener('click', function(event) {
             var lat = event.latLng.lat();
@@ -130,28 +131,39 @@
               if (status == google.maps.GeocoderStatus.OK) {
                 console.log(results);
                 if (results[0]) {
+                    // Clear stuff and circles aldready on the map:
+                    if (infowindow) {
+                        infowindow.close();
+                        infowindow = new google.maps.InfoWindow;
+                        //setMapOnAll(null);
+                    }
                     // Set map marker
                     console.log(results[0].formatted_address);
                     address = (results[0].formatted_address);
-                    map.setZoom(11);
-                    var marker = new google.maps.Marker({
+                    if(marker){
+                        marker.setMap(null);
+                    }
+                    marker = new google.maps.Marker({
                         position: latlng,
                         map: map
                     });
-                    var circle = new google.maps.Circle({
+                    if(circle){
+                        circle.setMap(null);
+                    }
+                    circle = new google.maps.Circle({
                         strokeColor: '#FF0000',
                         strokeOpacity: 0.8,
                         strokeWeight: 2,
                         fillColor: '#FF0000',
-                        fillOpacity: 0.35,
+                        fillOpacity: 0.25,
                         map: map,
                         center: {lat: lat, lng: lng},
                         radius: 10000
                     });
-                    infowindow.open(map, circle);
+                    //infowindow.open(map, circle);
                     infowindow.setContent(results[0].formatted_address);
                     infowindow.open(map, marker);
-                    
+                    map.setZoom(11);
 
                     //Set location infromation on our site
                     document.getElementById("locTitle").innerHTML = address;
