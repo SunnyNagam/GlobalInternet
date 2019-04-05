@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<input type="hidden" name="_token" value="{{ csrf_token() }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -85,7 +86,7 @@
                     <h5 id= "locTitle" class="card-title">Select A Location To Get Started</h5>
                     <p id="locDesc" class="card-text">With supporting text below as a natural lead-in to additional content.</p>
                     <ul class="list-group list-group-flush">
-                        <a href="#" class="mt-3 btn btn-primary">Get Twitter Results</a>
+                        <a href="#" onclick="loadTwitterResults()" class="mt-3 btn btn-primary">Get Twitter Results</a>
                         <a href="#" class="mt-3 btn btn-primary">Get Flickr Images</a>
                     </ul>
                   </div>
@@ -95,13 +96,27 @@
             <div id="map" class="mr-5"></div>
 
                 <script async defer src="https://maps.googleapis.com/maps/api/js?key={{env('GMAPS_API_KEY','')}}&callback=initMap"></script>
-            
+        </div>
+
+        <br>
+
+        <div id="locationResults">
+
         </div>
     </body>
 
     <script type="text/javascript">
+        // Global variables to talk between apis
+        var geocoder;
+        var infowindow;
+        var map;
+        var circle;
+        var marker;
+        var radius = 10000;
+        var lat;
+        var lng;
         function initMap() {
-          var map = new google.maps.Map(document.getElementById('map'), {
+          map = new google.maps.Map(document.getElementById('map'), {
             zoom: 8,
             center: {
               lat: 40.731,
@@ -109,14 +124,16 @@
             }
           });
 
-          var geocoder = new google.maps.Geocoder;
-          var infowindow = new google.maps.InfoWindow;
-          var circle = null;
-          var marker = null;
+            geocoder = new google.maps.Geocoder;
+            infowindow = new google.maps.InfoWindow;
+            circle = null;
+            marker = null;
+            lat = null;
+            lng = null;
 
           map.addListener('click', function(event) {
-            var lat = event.latLng.lat();
-            var lng = event.latLng.lng();
+            lat = event.latLng.lat();
+            lng = event.latLng.lng();
 
             var latlng = new google.maps.LatLng(lat, lng);
             // This is making the Geocode request
@@ -175,8 +192,42 @@
             });
           });
         }
-
         // TODO get tweets with https://api.twitter.com/1.1/search/tweets.json?geocode=45.51,-122.67,100km&rpp=50&q=%23olympics&callback=processResult
+        function loadTwitterResults(){
+            // if(!marker){
+            //     return;
+            // }
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    var woeid = JSON.parse(this.responseText)[0]["woeid"];
+
+                    var xmlhttp2 = new XMLHttpRequest();
+                    xmlhttp2.onreadystatechange = function() {
+                        if (this.readyState == 4 && this.status == 200) {
+                            var trends = JSON.parse(this.responseText)[0]["trends"];
+                            var newhtml = "<div class='card' style='width: 60%; margin:auto;'>";
+                            newhtml+= "<h5 class='card-title'>Trending Tweets</h5><h6 class='card-subtitle mb-2 text-muted'>in "+JSON.parse(this.responseText)[0]["locations"][0]["name"]+"</h6>";
+                            newhtml += "<div class='list-group'>"
+                            for(var i = 0; i < trends.length; i++){
+                                var trend = trends[i];
+                                //console.log(trend); 
+                                newhtml += "<a href='"+trend["url"]+"' target='_blank' class='list-group-item list-group-item-action'>"+trend["name"]+"</a>";
+                            }
+                            newhtml += "</div></div>"
+                            document.getElementById("locationResults").innerHTML = newhtml;
+
+                        }
+                    };
+                    xmlhttp2.open("GET", "/requestTwitterPHP/"+woeid, true);
+                    //xmlhttp2.open("GET", "/requestTwitterPHP", true);
+                    xmlhttp2.send();
+                }
+            };
+            xmlhttp.open("GET", "/requestTwitterPHPID/"+lat+","+lng, true);
+            //xmlhttp.open("GET", "/requestTwitterPHP", true);
+            xmlhttp.send();
+        }
     </script>
 </html>
     
