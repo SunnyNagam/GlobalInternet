@@ -87,15 +87,15 @@
                     <p id="locDesc" class="card-text">With supporting text below as a natural lead-in to additional content.</p>
                     <ul class="list-group list-group-flush">
                         <a href="#" onclick="loadTwitterResults()" class="mt-3 btn btn-primary">Get Twitter Results</a>
-                        <a href="#" class="mt-3 btn btn-primary">Get Flickr Images</a>
+                        <a href="#" onclick="loadFlickrResults()" class="mt-3 btn btn-primary">Get Flickr Images</a>
                     </ul>
                   </div>
-                </div> 
+                </div>
             </div>
                 <!-- TODO put key in .env -->
             <div id="map" class="mr-5"></div>
 
-                <script async defer src="https://maps.googleapis.com/maps/api/js?key={{env('GMAPS_API_KEY','')}}&callback=initMap"></script>
+                <script async defer src="https://maps.googleapis.com/maps/api/js?key={{env('GMAPS_API_KEY','null')}}&callback=initMap"></script>
         </div>
 
         <br>
@@ -103,8 +103,10 @@
         <div id="locationResults">
 
         </div>
-    </body>
 
+
+    </body>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script type="text/javascript">
         // Global variables to talk between apis
         var geocoder;
@@ -123,6 +125,7 @@
               lng: -76.997
             }
           });
+          //alert("{{env('GMAPS_API_KEY','null')}}");
 
             geocoder = new google.maps.Geocoder;
             infowindow = new google.maps.InfoWindow;
@@ -205,13 +208,14 @@
                     var xmlhttp2 = new XMLHttpRequest();
                     xmlhttp2.onreadystatechange = function() {
                         if (this.readyState == 4 && this.status == 200) {
+                            //console.log(this.responseText);
                             var trends = JSON.parse(this.responseText)[0]["trends"];
                             var newhtml = "<div class='card' style='width: 60%; margin:auto;'>";
                             newhtml+= "<h5 class='card-title'>Trending Tweets</h5><h6 class='card-subtitle mb-2 text-muted'>in "+JSON.parse(this.responseText)[0]["locations"][0]["name"]+"</h6>";
                             newhtml += "<div class='list-group'>"
                             for(var i = 0; i < trends.length; i++){
                                 var trend = trends[i];
-                                //console.log(trend); 
+                                //console.log(trend);
                                 newhtml += "<a href='"+trend["url"]+"' target='_blank' class='list-group-item list-group-item-action'>"+trend["name"]+"</a>";
                             }
                             newhtml += "</div></div>"
@@ -228,6 +232,46 @@
             //xmlhttp.open("GET", "/requestTwitterPHP", true);
             xmlhttp.send();
         }
+
+        function loadFlickrResults() {
+
+          //for now just +- 1
+          var lat1 = lat - 1;
+          var lng1 = lng - 1;
+          var lat2 = lat + 1;
+          var lng2 = lng + 1;
+
+
+          recursiveLoad(1, 5, 1, {lat1: lat1, lat2: lat2, lng1: lng1, lng2: lng2});
+          @php
+
+          //dd('lat');
+
+          @endphp
+
+        }
+
+        function recursiveLoad(page, psize, num, info) {
+          var yr = new XMLHttpRequest();
+          yr.open("GET","/flickr_query/"+page+","+psize+","+info['lat1']+","+info['lat2']+","+info['lng1']+","+info['lng2'],true);
+          yr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+          // yr.send("p=" + page + "&psize=" + psize + "&lat1=" + info['lat1'] + "&lat2=" + info['lat2'] + "&lon1=" + info['lon1'] + "&lon2=" + info['lon2']);
+          yr.send();
+          yr.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+              // $('#display').append(this.responseText);
+              var response = JSON.parse(this.responseText);
+              console.log(response);
+              $("#locationResults").append(response);
+              // fixBackground();
+              if (page < num)
+                recursiveLoad(page+1, psize, num, info);
+              // else
+              //   $("#loader").hide();
+            }
+          };
+        }
+
+
     </script>
 </html>
-    
