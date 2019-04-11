@@ -13,12 +13,16 @@
         <!-- Styles -->
         <style>
             html, body {
-                background-color: #fff;
+                background-color: transparent;/*#fff;*/
                 color: #636b6f;
                 font-family: 'Nunito', sans-serif;
                 font-weight: 200;
                 height: 100vh;
                 margin: 0;
+                
+            }
+            html {
+                background-image: linear-gradient(transparent, transparent 100vh, #88888844 140vh, black 200vh);
             }
 
             .full-height {
@@ -57,25 +61,57 @@
                 height: 80%;
                 width: 80%;
             }
+            .flickr_img {
+                width: 500px;
+                position: relative;
+                margin-bottom: 10px;
+                display: block;
+            }
+            .flickr_img > img{
+                position: relative;
+                top: 0;
+                left: 0;
+                width: 100%;
+            }
+            .flickr_img > .b_icon {
+                position: absolute;
+                z-index: 500;
+                top: 12px;
+                left: 12px;
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                background-attachment: local;
+                background-size: contain;
+                box-shadow: 0px 0px 8px 1px;
+            }
+            #loader {
+                position: fixed;
+                bottom: 1vmax;
+                left: 1vmax;
+                width: 10vmax;
+                height: 10vmax;
+                z-index: 1000;
+            }
+            #flickrResults, #twittrResults {
+                min-height: 2000px;
+                width: 102vw;
+                margin-left: -1vw;
+
+                background-color: transparent;
+                float: left;
+                display: inline-block;
+                width: 50%;
+            }
+            .full-width {
+                width: 100%;
+            }
         </style>
     </head>
     <body>
         <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" rel="stylesheet"/>
+        <img id="loader" src="https://loading.io/spinners/typing/lg.-text-entering-comment-loader.gif">
         <div class="flex-center position-ref full-height">
-            @if (Route::has('login'))
-                <div class="top-right links">
-                    @auth
-                        <a href="{{ url('/home') }}">Home</a>
-                    @else
-                        <a href="{{ route('login') }}">Login</a>
-
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}">Register</a>
-                        @endif
-                    @endauth
-                </div>
-            @endif
-
             <div class="content">
                 <div class="title m-b-md">
                     Global Internet
@@ -86,28 +122,30 @@
                     <h5 id= "locTitle" class="card-title">Select A Location To Get Started</h5>
                     <p id="locDesc" class="card-text">With supporting text below as a natural lead-in to additional content.</p>
                     <ul class="list-group list-group-flush">
-                        <a href="#" onclick="loadTwitterResults()" class="mt-3 btn btn-primary">Get Twitter Results</a>
-                        <a href="#" onclick="loadFlickrResults()" class="mt-3 btn btn-primary">Get Flickr Images</a>
+                        <a href="#" onclick="loadAllResults()" class="mt-3 btn btn-primary">Show Me Everything</a>
+                        <a href="#" onclick="loadTwitterResults()" class="mt-3 btn btn-primary">Reload Twitter</a>
+                        <a href="#" onclick="loadFlickrResults()" class="mt-3 btn btn-primary">Reload Flickr Images</a>
                     </ul>
                   </div>
                 </div>
             </div>
-                <!-- TODO put key in .env -->
             <div id="map" class="mr-5"></div>
-
-                <script async defer src="https://maps.googleapis.com/maps/api/js?key={{env('GMAPS_API_KEY','null')}}&callback=initMap"></script>
+            <script async defer src="https://maps.googleapis.com/maps/api/js?key={{env('GMAPS_API_KEY','null')}}&callback=initMap"></script>
         </div>
 
         <br>
 
-        <div id="locationResults">
-
+        <div class="full-width" id="resultsContainer">
+            <div id="twittrResults" style="width:500px;margin:auto;"></div>
+            <div id="flickrResults" style="width:500px;margin:auto;"></div>
         </div>
-
 
     </body>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script type="text/javascript">
+        $(document).ready(function(){
+             $("#loader").hide();
+        });
         // Global variables to talk between apis
         var geocoder;
         var infowindow;
@@ -121,8 +159,8 @@
           map = new google.maps.Map(document.getElementById('map'), {
             zoom: 8,
             center: {
-              lat: 40.731,
-              lng: -76.997
+              lat: -6.2088,
+              lng: 106.8456
             }
           });
           //alert("{{env('GMAPS_API_KEY','null')}}");
@@ -195,11 +233,17 @@
             });
           });
         }
+        function loadAllResults() {
+            // calls both asyncronously
+            loadTwitterResults();
+            loadFlickrResults();
+        }
         // TODO get tweets with https://api.twitter.com/1.1/search/tweets.json?geocode=45.51,-122.67,100km&rpp=50&q=%23olympics&callback=processResult
-        function loadTwitterResults(){
+        async function loadTwitterResults() {
             // if(!marker){
             //     return;
             // }
+            $("#loader").show();
             var xmlhttp = new XMLHttpRequest();
             xmlhttp.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
@@ -208,6 +252,7 @@
                     var xmlhttp2 = new XMLHttpRequest();
                     xmlhttp2.onreadystatechange = function() {
                         if (this.readyState == 4 && this.status == 200) {
+                            $("#loader").hide();
                             //console.log(this.responseText);
                             var trends = JSON.parse(this.responseText)[0]["trends"];
                             var newhtml = "<div class='card' style='width: 60%; margin:auto;'>";
@@ -219,7 +264,7 @@
                                 newhtml += "<a href='"+trend["url"]+"' target='_blank' class='list-group-item list-group-item-action'>"+trend["name"]+"</a>";
                             }
                             newhtml += "</div></div>"
-                            document.getElementById("locationResults").innerHTML = newhtml;
+                            document.getElementById("twittrResults").innerHTML = newhtml;
 
                         }
                     };
@@ -233,7 +278,7 @@
             xmlhttp.send();
         }
 
-        function loadFlickrResults() {
+        async function loadFlickrResults() {
 
           //for now just +- 1
           var lat1 = lat - 1;
@@ -241,35 +286,41 @@
           var lat2 = lat + 1;
           var lng2 = lng + 1;
 
+          $("#flickrResults").html("");
 
           recursiveLoad(1, 5, 1, {lat1: lat1, lat2: lat2, lng1: lng1, lng2: lng2});
-          @php
-
-          //dd('lat');
-
-          @endphp
-
         }
 
         function recursiveLoad(page, psize, num, info) {
-          var yr = new XMLHttpRequest();
-          yr.open("GET","/flickr_query/"+page+","+psize+","+info['lat1']+","+info['lat2']+","+info['lng1']+","+info['lng2'],true);
-          yr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-          // yr.send("p=" + page + "&psize=" + psize + "&lat1=" + info['lat1'] + "&lat2=" + info['lat2'] + "&lon1=" + info['lon1'] + "&lon2=" + info['lon2']);
-          yr.send();
-          yr.onreadystatechange = function () {
-            if (this.readyState == 4 && this.status == 200) {
-              // $('#display').append(this.responseText);
-              var response = JSON.parse(this.responseText);
-              console.log(response);
-              $("#locationResults").append(response);
-              // fixBackground();
-              if (page < num)
-                recursiveLoad(page+1, psize, num, info);
-              // else
-              //   $("#loader").hide();
-            }
-          };
+            $("#loader").show();
+            var yr = new XMLHttpRequest();
+            yr.open("GET","/flickr_query/"+page+","+psize+","+info['lat1']+","+info['lat2']+","+info['lng1']+","+info['lng2'],true);
+            yr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            // yr.send("p=" + page + "&psize=" + psize + "&lat1=" + info['lat1'] + "&lat2=" + info['lat2'] + "&lon1=" + info['lon1'] + "&lon2=" + info['lon2']);
+            yr.send();
+            yr.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    $("#loader").hide();
+                    // $('#display').append(this.responseText);
+                    var response = JSON.parse(this.responseText);
+                    //console.log(response);
+                    for (str in response){
+                        let obj = JSON.parse(response[str]);
+                        //console.log(obj);
+                        // imgpg: $imgpg, imgsrc: $imgsrc, buddyicon: $buddyicon
+                        let image = '<a class="flickr_img"><img src="' + obj.imgsrc + '" /></a>';
+                        image = $(image).attr('href',obj.imgpg);
+                        //let container = $(image).wrap('');
+                        let set = $(image).append('<div class="b_icon" style="background-image:url(\'' + obj.buddyicon + '\')">');
+                        $("#flickrResults").append(set);
+                    }
+                    // fixBackground();
+                    if (page < num)
+                    recursiveLoad(page+1, psize, num, info);
+                    // else
+                    //   $("#loader").hide();
+                }
+            };
         }
 
 

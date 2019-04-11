@@ -128,7 +128,7 @@ $data_array = explode(",", $data);
 
       // $jsonobj = imgpg: $imgpg, imgsrc: $imgsrc, buddyicon: $buddyicon};
 
-      array_push($retArr, "{imgpg: $imgpg, imgsrc: $imgsrc, buddyicon: $buddyicon}");
+      array_push($retArr, "{\"imgpg\": \"$imgpg\", \"imgsrc\": \"$imgsrc\", \"buddyicon\": \"$buddyicon\"}");
 
     //}
   }
